@@ -9,7 +9,7 @@ using Nano3.Path.Collection;
 
 namespace Nano3.Path
 {
-    public abstract class AStarPath<T> where T : struct, IEquatable<T>
+    public abstract class AStarCalculator<T> where T : struct, IEquatable<T>
     {
         protected const float ImpassableCost = float.PositiveInfinity;
 

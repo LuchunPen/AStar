@@ -1,6 +1,6 @@
 ﻿/*
-Copyright (c) Luchunpen (bwolf88).  All rights reserved.
-Date: 28.07.2016 18:33:00
+Copyright (c) Luchunpen.
+Date: 28.07.2016
 */
 
 using System;

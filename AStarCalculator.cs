@@ -1,3 +1,8 @@
+/*
+Copyright (c) Luchunpen.
+Date: 02.04.2023 22:45:38
+*/
+
 using System;
 using System.Collections.Generic;
 using Nano3.Path.Collection;

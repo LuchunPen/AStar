@@ -9,11 +9,16 @@ using Nano3.Path.Collection;
 
 namespace Nano3.Path
 {
-    public abstract class AStarCalculator<T> where T : struct, IEquatable<T>
+    public interface IStarHeuristic<T> where T : struct, IEquatable<T>
     {
-        protected const float ImpassableCost = float.PositiveInfinity;
+        float ImpassableCost { get; }
+        List<T> GetNeighbors(T point);
+        float GetEstimatedCost(T from, T to);
+    }
 
-        internal class Node : IComparable<Node>
+    public class AStarCalculator<T> where T : struct, IEquatable<T>
+    {
+        private class Node : IComparable<Node>
         {
             public T Index;
             public T ParentIndex;
@@ -48,14 +53,10 @@ namespace Nano3.Path
             }
         }
 
-        internal FastDictionaryM2<T, Node> _nodesStorage = new FastDictionaryM2<T, Node>();
-        internal HeapMin<Node> _openHeap = new HeapMin<Node>();
-        internal List<T> _neighbors = new List<T>();
+        private FastDictionaryM2<T, Node> _nodesStorage = new FastDictionaryM2<T, Node>();
+        private HeapMin<Node> _openHeap = new HeapMin<Node>();
 
-        protected abstract bool GetNeighbors(T point, List<T> neighbors);
-        protected abstract float GetEstimatedCost(T from, T to);
-
-        public List<T> CalculatePath(T start, T goal, int maxIterations)
+        public List<T> CalculatePath<H>(T start, T goal, H heuristic, int maxIterations) where H : IStarHeuristic<T>
         {
             List<T> result = null;
             if (start.Equals(goal)) { return result; }
@@ -64,7 +65,7 @@ namespace Nano3.Path
             _openHeap.Clear();
 
             Node startNode = new Node(start);
-            startNode.H = GetEstimatedCost(start, goal);
+            startNode.H = heuristic.GetEstimatedCost(start, goal);
             _nodesStorage.Add(startNode.Index, startNode);
             _openHeap.Add(startNode);
 
@@ -86,8 +87,7 @@ namespace Nano3.Path
                     else if (currentNode.H < best.H) { best = currentNode; }
                 }
 
-                _neighbors.Clear();
-                GetNeighbors(currentNode.Index, _neighbors);
+                List<T> _neighbors = heuristic.GetNeighbors(currentNode.Index);
                 for (int i = 0; i < _neighbors.Count; i++)
                 {
                     T neibIndex = _neighbors[i];
@@ -95,8 +95,8 @@ namespace Nano3.Path
                     _nodesStorage.TryGetValue(neibIndex, out neibNode);
                     if (neibNode != null && neibNode.IsClosed) { continue; }
 
-                    float stepCost = GetEstimatedCost(currentNode.Index, neibIndex);
-                    if (stepCost == ImpassableCost) { continue; }
+                    float stepCost = heuristic.GetEstimatedCost(currentNode.Index, neibIndex);
+                    if (stepCost == heuristic.ImpassableCost) { continue; }
 
                     float g = currentNode.G + stepCost;
                     if (neibNode == null)
@@ -104,7 +104,7 @@ namespace Nano3.Path
                         neibNode = new Node(neibIndex);
                         neibNode.ParentIndex = currentNode.Index;
                         neibNode.G = g;
-                        neibNode.H = GetEstimatedCost(neibIndex, goal);
+                        neibNode.H = heuristic.GetEstimatedCost(neibIndex, goal);
                         neibNode.F = neibNode.G + neibNode.H;
                         _nodesStorage.Add(neibIndex, neibNode);
                         _openHeap.Add(neibNode);
@@ -124,19 +124,13 @@ namespace Nano3.Path
             }
 
         CREATE_PATH:
-            result = CreatePath(startNode, best);
 
-            return result;
-        }
-
-        internal List<T> CreatePath(Node start, Node goal)
-        {
-            List<T> result = new List<T>();
-            if (start == null || goal == null) { return result; }
+            result = new List<T>();
+            if (startNode == null || best == null) { return result; }
 
             Node n;
-            T cur_index = goal.Index;
-            
+            T cur_index = best.Index;
+
             do
             {
                 _nodesStorage.TryGetAndRemove(cur_index, out n);
@@ -144,7 +138,7 @@ namespace Nano3.Path
                 result.Add(n.Index);
                 cur_index = n.ParentIndex;
             }
-            while (!cur_index.Equals(start.Index));
+            while (!cur_index.Equals(startNode.Index));
 
             return result;
         }

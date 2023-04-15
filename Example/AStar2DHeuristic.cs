@@ -8,7 +8,7 @@ using System.Collections.Generic;
 
 namespace Nano3.Path.Example
 {
-    public class AStar2DMap : IStarHeuristic<XYZ64>
+    public class AStar2DMap : IAStarHeuristic<XYZ64>
     {
         private Map2D<bool> _map;
 

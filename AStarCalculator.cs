@@ -9,7 +9,7 @@ using Nano3.Path.Collection;
 
 namespace Nano3.Path
 {
-    public interface IStarHeuristic<T> where T : struct, IEquatable<T>
+    public interface IAStarHeuristic<T> where T : struct, IEquatable<T>
     {
         float ImpassableCost { get; }
         List<T> GetNeighbors(T point);
@@ -56,7 +56,7 @@ namespace Nano3.Path
         private FastDictionaryM2<T, Node> _nodesStorage = new FastDictionaryM2<T, Node>();
         private HeapMin<Node> _openHeap = new HeapMin<Node>();
 
-        public List<T> CalculatePath<H>(T start, T goal, H heuristic, int maxIterations) where H : IStarHeuristic<T>
+        public List<T> CalculatePath<H>(T start, T goal, H heuristic, int maxIterations) where H : IAStarHeuristic<T>
         {
             List<T> result = null;
             if (start.Equals(goal)) { return result; }
@@ -109,8 +109,7 @@ namespace Nano3.Path
                         _nodesStorage.Add(neibIndex, neibNode);
                         _openHeap.Add(neibNode);
                     }
-                    
-                    if (g < neibNode.G)
+                    else if (g < neibNode.G)
                     {
                         neibNode.G = g;
                         neibNode.F = neibNode.G + neibNode.H;
@@ -141,6 +140,70 @@ namespace Nano3.Path
             while (!cur_index.Equals(startNode.Index));
 
             return result;
+        }
+
+        public List<T> CalculateArea<H>(T start, float maxCost, H heuristic) where H : IAStarHeuristic<T>
+        {
+            List<T> result = new List<T>();
+            if (maxCost <= 0) { return result; }
+
+            _nodesStorage.Clear();
+            _openHeap.Clear();
+
+            Node startNode = new Node(start);
+            _nodesStorage.Add(startNode.Index, startNode);
+            _openHeap.Add(startNode);
+
+            Node best = null;
+
+            while (true)
+            {
+                Node currentNode = (_openHeap.Count > 0) ? _openHeap.GetBest() : null;
+
+                if (currentNode == null) { return result; }
+                if (currentNode.IsClosed) { continue; }
+
+                if (currentNode != startNode)
+                {
+                    if (best == null) { best = currentNode; }
+                    else if (currentNode.H < best.H) { best = currentNode; }
+                }
+
+                List<T> _neighbors = heuristic.GetNeighbors(currentNode.Index);
+                for (int i = 0; i < _neighbors.Count; i++)
+                {
+                    T neibIndex = _neighbors[i];
+                    Node neibNode;
+                    _nodesStorage.TryGetValue(neibIndex, out neibNode);
+                    if (neibNode != null && neibNode.IsClosed) { continue; }
+
+                    float stepCost = heuristic.GetEstimatedCost(currentNode.Index, neibIndex);
+                    if (stepCost == heuristic.ImpassableCost) { continue; }
+
+                    float g = currentNode.G + stepCost;
+                    if (g > maxCost) { continue; }
+
+                    if (neibNode == null)
+                    {
+                        neibNode = new Node(neibIndex);
+                        neibNode.ParentIndex = currentNode.Index;
+                        neibNode.G = g;
+                        neibNode.F = neibNode.G + neibNode.H;
+                        _nodesStorage.Add(neibIndex, neibNode);
+                        _openHeap.Add(neibNode);
+                    }
+                    else if (g < neibNode.G)
+                    {
+                        neibNode.G = g;
+                        neibNode.F = neibNode.G + neibNode.H;
+                        neibNode.ParentIndex = currentNode.Index;
+                        _openHeap.Add(neibNode);
+                    }
+                }
+
+                currentNode.IsClosed = true;
+                result.Add(currentNode.Index);
+            }
         }
     }
 }

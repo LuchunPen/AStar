@@ -154,20 +154,12 @@ namespace Nano3.Path
             _nodesStorage.Add(startNode.Index, startNode);
             _openHeap.Add(startNode);
 
-            Node best = null;
-
             while (true)
             {
                 Node currentNode = (_openHeap.Count > 0) ? _openHeap.GetBest() : null;
 
                 if (currentNode == null) { return result; }
                 if (currentNode.IsClosed) { continue; }
-
-                if (currentNode != startNode)
-                {
-                    if (best == null) { best = currentNode; }
-                    else if (currentNode.H < best.H) { best = currentNode; }
-                }
 
                 List<T> _neighbors = heuristic.GetNeighbors(currentNode.Index);
                 for (int i = 0; i < _neighbors.Count; i++)

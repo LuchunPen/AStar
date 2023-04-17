@@ -5,7 +5,7 @@ Date: 02.04.2023
 
 using System;
 using System.Collections.Generic;
-using Nano3.Path.Collection;
+using Nano3.Collection;
 
 namespace Nano3.Path
 {

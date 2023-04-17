@@ -6,7 +6,7 @@ Date: 28/03/2023
 using System;
 using System.Collections.Generic;
 
-namespace Nano3.Path.Collection
+namespace Nano3.Collection
 {
     internal class HeapMin<TValue>
         where TValue: IComparable<TValue>

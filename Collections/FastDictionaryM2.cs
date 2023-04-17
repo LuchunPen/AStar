@@ -7,7 +7,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace Nano3.Path.Collection
+namespace Nano3.Collection
 {
     internal class FastDictionaryM2<TKey, TValue> : IDictionary<TKey, TValue>
         where TKey : struct, IEquatable<TKey>
